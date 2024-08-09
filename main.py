@@ -50,7 +50,12 @@ item_img4 = pygame.image.load("img/item4.png").convert_alpha()  # Item tipo 4
 item_img4 = pygame.transform.scale(item_img4, (15, 15))
 
 item_images = [item_img1, item_img2, item_img3, item_img4]  # Lista de imagens de itens colecionáveis
+background = pygame.image.load('img/img_menu.jpg').convert_alpha()
 
+# Obter a largura da imagem de fundo
+background_width = background.get_width()
+# Calcular o número de repetições necessárias para cobrir a largura da tela
+num_repeats = (WIDTH // background_width) + 1
 # Configurações da nave
 ship_width, ship_height = ship_img.get_size()
 ship_pos = [50, HEIGHT // 2 - ship_height // 2]
@@ -63,7 +68,7 @@ bullets = []
 bullet_speed = 10
 
 # Configurações dos alienígenas
-alien_speed = 3
+alien_speed = 1.5
 alien_types = [alien_img1, alien_img2, alien_img3, alien_img4]  # Lista de tipos de alienígenas
 alien_death_threshold = [3, 5, 7, 3]  # Número de mortes necessárias para deixar o item
 
@@ -84,7 +89,7 @@ laser_active = False
 laser_duration = 100  # Duração do laser em frames
 laser_timer = 0
 laser_pos = None  # Inicializar como None
-laser_speed = 15  # Velocidade do laser
+laser_speed = 5  # Velocidade do laser
 
 # Configurações do relógio
 clock = pygame.time.Clock()
@@ -143,7 +148,8 @@ while not game_over:
             ship_pos[0] += ship_speed
 
     screen.fill(BLACK)
-
+    for i in range(num_repeats):
+        screen.blit(background, (i * background_width, 0))
     # Movimentação dos projéteis
     for bullet in bullets[:]:
         bullet[0] += bullet_speed
