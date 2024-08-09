@@ -14,7 +14,7 @@ WIDTH, HEIGHT = screen_width, 50  # Largura ajustada para ocupar toda a largura 
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption("Invasão Alienígena")
 
-# Posicionar a janela do jogo acima da barra de tarefas
+# Função para manter a janela sempre no topo
 x_pos = 0
 y_pos = screen_height - HEIGHT - 40
 ctypes.windll.user32.SetWindowPos(pygame.display.get_wm_info()['window'], 0, x_pos, y_pos, 0, 0, 0x0001)
@@ -30,7 +30,6 @@ YELLOW = (255, 255, 0)
 # Carregar imagens
 ship_img = pygame.image.load("img/ship_1.png").convert_alpha()
 ship_img = pygame.transform.scale(ship_img, (30, 30))
-############## Aliens###################
 alien_img1 = pygame.image.load("img/alien1.png").convert_alpha()  # Tipo 1
 alien_img1 = pygame.transform.scale(alien_img1, (20, 30))
 alien_img2 = pygame.image.load("img/alien2.png").convert_alpha()  # Tipo 2
@@ -39,7 +38,6 @@ alien_img3 = pygame.image.load("img/alien3.png").convert_alpha()  # Tipo 3
 alien_img3 = pygame.transform.scale(alien_img3, (20, 30))
 alien_img4 = pygame.image.load("img/alien4.png").convert_alpha()  # Tipo 4
 alien_img4 = pygame.transform.scale(alien_img4, (20, 30))
-###################### itens ###########################
 item_img1 = pygame.image.load("img/healt.png").convert_alpha()  # Item tipo 1
 item_img1 = pygame.transform.scale(item_img1, (15, 15))
 item_img2 = pygame.image.load("img/escudo.png").convert_alpha()  # Item tipo 2
@@ -56,6 +54,7 @@ background = pygame.image.load('img/img_menu.jpg').convert_alpha()
 background_width = background.get_width()
 # Calcular o número de repetições necessárias para cobrir a largura da tela
 num_repeats = (WIDTH // background_width) + 1
+
 # Configurações da nave
 ship_width, ship_height = ship_img.get_size()
 ship_pos = [50, HEIGHT // 2 - ship_height // 2]
@@ -89,10 +88,11 @@ laser_active = False
 laser_duration = 100  # Duração do laser em frames
 laser_timer = 0
 laser_pos = None  # Inicializar como None
-laser_speed  = 5  # Velocidade do laser
+laser_speed = 5  # Velocidade do laser
 
 # Configurações do relógio
 clock = pygame.time.Clock()
+
 
 # Função para desenhar texto na tela
 def draw_text(text, font, color, surface, x, y):
@@ -100,6 +100,7 @@ def draw_text(text, font, color, surface, x, y):
     text_rect = text_obj.get_rect()
     text_rect.topleft = (x, y)
     surface.blit(text_obj, text_rect)
+
 
 # Função para detectar colisão
 def detect_collision(obj1_pos, obj2_pos, obj1_width, obj1_height, obj2_width, obj2_height):
@@ -111,9 +112,25 @@ def detect_collision(obj1_pos, obj2_pos, obj1_width, obj1_height, obj2_width, ob
         return True
     return False
 
+
 # Função para gerar item colecionável
 def generate_item_type(alien_type_index):
     return item_images[alien_type_index]  # Escolhe o item correspondente ao tipo de alienígena
+
+def pause():
+    paused = True
+    font = pygame.font.SysFont(None, 30)
+    draw_text('Paused. Press P to continue.', font, RED, screen, WIDTH // 2 - 100, HEIGHT // 2 - 10)
+    pygame.display.flip()
+    while paused:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    paused = False
+        clock.tick(5)
 
 # Loop principal do jogo
 game_over = False
@@ -124,10 +141,18 @@ score = 0
 font = pygame.font.SysFont(None, 15)
 
 while not game_over:
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    if 0 <= mouse_x <= WIDTH and 0 <= mouse_y <= HEIGHT:
+        paused = False
+    else:
+        paused = True
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             game_over = True
         if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_p:
+                pause()
             if event.key == pygame.K_SPACE:
                 bullet_pos = [ship_pos[0] + ship_width, ship_pos[1] + ship_height // 2 - bullet_height // 2]
                 bullets.append(bullet_pos)
@@ -135,6 +160,8 @@ while not game_over:
                 game_over = True
             if event.key == pygame.K_z and laser_active:  # Disparar o laser
                 laser_pos = [ship_pos[0] + ship_width, ship_pos[1] + ship_height // 2]
+
+                # set_window_always_on_top()  # Atualizar para sempre no topo quando o laser é ativado
 
     keys = pygame.key.get_pressed()
     if not paused:
@@ -190,7 +217,7 @@ while not game_over:
 
     # Movimentação dos itens colecionáveis
     for item in items[:]:
-        item["pos"][0] -= alien_speed
+        item["pos"][0] #-= alien_speed
         if item["pos"][0] < 0:
             items.remove(item)
     for alien in aliens[:]:
@@ -201,7 +228,6 @@ while not game_over:
                 score += 1
             else:
                 game_over = True
-
 
     # Detecção de colisão entre nave e itens colecionáveis
     for item in items[:]:
@@ -237,7 +263,6 @@ while not game_over:
         shield_timer -= 1
         if shield_timer <= 0:
             shield_active = False
-
 
     # Desenhar o laser, se o laser estiver ativo e laser_pos não for None
     if laser_active and laser_pos:
