@@ -89,7 +89,7 @@ laser_active = False
 laser_duration = 100  # Duração do laser em frames
 laser_timer = 0
 laser_pos = None  # Inicializar como None
-laser_speed = 5  # Velocidade do laser
+laser_speed  = 5  # Velocidade do laser
 
 # Configurações do relógio
 clock = pygame.time.Clock()
@@ -195,7 +195,14 @@ while not game_over:
             items.remove(item)
     for alien in aliens[:]:
         if detect_collision(ship_pos, alien["pos"], ship_width, ship_height, alien_width, alien_height):
-            game_over = True
+            if shield_active:
+                # Se o escudo estiver ativo, não termine o jogo
+                aliens.remove(alien)
+                score += 1
+            else:
+                game_over = True
+
+
     # Detecção de colisão entre nave e itens colecionáveis
     for item in items[:]:
         if detect_collision(ship_pos, item["pos"], ship_width, ship_height, item_width, item_height):
@@ -226,9 +233,11 @@ while not game_over:
     if shield_active:
         pygame.draw.circle(screen, BLUE, (ship_pos[0] + ship_width // 2, ship_pos[1] + ship_height // 2),
                            max(ship_width, ship_height) // 2 + 10, 2)
+
         shield_timer -= 1
         if shield_timer <= 0:
             shield_active = False
+
 
     # Desenhar o laser, se o laser estiver ativo e laser_pos não for None
     if laser_active and laser_pos:
