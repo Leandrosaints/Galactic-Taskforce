@@ -4,7 +4,7 @@ import ctypes
 
 # Inicialização do Pygame
 pygame.init()
-
+from dados_json import *
 # Configurações da tela
 user32 = ctypes.windll.user32
 screen_width, screen_height = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
@@ -221,8 +221,14 @@ score = 0
 # Fonte para o texto do score e game over
 font = pygame.font.SysFont(None, 15)
 def main():
-    player_name = get_player_name()  # Obter o nome do jogador antes de iniciar o jogo
+    #player_name = get_player_name()  # Obter o nome do jogador antes de iniciar o jogo
     global game_over, score, aliens, bullets, items, ship_pos, shield_active, shield_timer, laser_active, laser_timer, laser_pos
+    caminho_json = 'pontuacoes.json'
+    nome_jogador = get_player_name()
+
+
+    verificar_ou_criar_json(caminho_json)
+    #pontuacao_atual = carregar_pontuacao(caminho_json, nome_jogador)
 
     # Exibir o nome do jogador ou fazer qualquer configuração inicial antes de começar o jogo
     #print(f"Bem-vindo, {player_name}!")
@@ -238,6 +244,7 @@ def main():
             if event.type == pygame.QUIT:
 
                 game_over = True
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
 
@@ -379,7 +386,7 @@ def main():
 
         # Mostrar o score na tela
         draw_text(f'Score: {score}', font, WHITE, screen, 10, 10)
-
+        atualizar_pontuacao(caminho_json, nome_jogador, score)
         # Mostrar mensagem de Game Over se o jogo terminar
         if game_over:
             game_over_screen()
