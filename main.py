@@ -118,18 +118,56 @@ def generate_item_type(alien_type_index):
     return item_images[alien_type_index]  # Escolhe o item correspondente ao tipo de alienígena
 
 
+def get_player_name():
+    font = pygame.font.SysFont(None, 30)
+    input_box = pygame.Rect(WIDTH // 2 - 70, HEIGHT // 2 - 15, 140, 30)
+    color_inactive = pygame.Color('lightskyblue3')
+    color_active = pygame.Color('dodgerblue2')
+    color = color_inactive
+    text = ''
+    active = False
+    done = False
+
+    while not done:
+        screen.fill(BLACK)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                #sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if input_box.collidepoint(event.pos):
+                    active = not active
+                else:
+                    active = False
+                color = color_active if active else color_inactive
+            if event.type == pygame.KEYDOWN:
+                if active:
+                    if event.key == pygame.K_RETURN:
+                        done = True
+                    elif event.key == pygame.K_BACKSPACE:
+                        text = text[:-1]
+                    else:
+                        text += event.unicode
+
+        # Renderizar o texto da caixa de entrada
+        txt_surface = font.render(text, True, color)
+        width = max(200, txt_surface.get_width()+10)
+        input_box.w = width
+        screen.fill(BLACK)
+        pygame.draw.rect(screen, color, input_box, 2)
+        screen.blit(txt_surface, (input_box.x+5, input_box.y+5))
+        pygame.display.flip()
+
+    return text
 def game_over_screen():
     global game_over, score
     game_over = True
     font = pygame.font.SysFont(None, 25)
 
     while game_over:
-        #screen.fill(BLACK)
+        screen.fill(BLACK)
         draw_text('Game Over!', font, RED, screen, WIDTH // 2 - 50, HEIGHT // 2 )
-
-        #draw_text('Game Over!', font, RED, screen, WIDTH // 2 - 100, HEIGHT // 2 - 30)
-        #draw_text('Press R to Restart or Q to Quit', font, WHITE, screen, WIDTH // 2 - 180, HEIGHT // 2 + 20)
-        draw_text('Press R to Restart or Q to Quit', font, RED, screen, WIDTH // 2 - 100, HEIGHT // 2 - 20)
+        draw_text('Press R to Restart or Q to Quit', font, RED, screen, WIDTH // 2 - 120, HEIGHT // 2 - 20)
 
         pygame.display.flip()
 
@@ -161,7 +199,6 @@ def restart_game():
     laser_timer = 0
     laser_pos = None
 
-
 def pause():
     paused = True
     font = pygame.font.SysFont(None, 30)
@@ -181,168 +218,177 @@ def pause():
 game_over = False
 paused = False
 score = 0
-
 # Fonte para o texto do score e game over
 font = pygame.font.SysFont(None, 15)
+def main():
+    player_name = get_player_name()  # Obter o nome do jogador antes de iniciar o jogo
+    global game_over, score, aliens, bullets, items, ship_pos, shield_active, shield_timer, laser_active, laser_timer, laser_pos
 
-while not game_over:
-    mouse_x, mouse_y = pygame.mouse.get_pos()
-    if 0 <= mouse_x <= WIDTH and 0 <= mouse_y <= HEIGHT:
-        paused = False
-    else:
-        paused = True
+    # Exibir o nome do jogador ou fazer qualquer configuração inicial antes de começar o jogo
+    #print(f"Bem-vindo, {player_name}!")
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            game_over = True
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_p:
-                pause()
-            if event.key == pygame.K_SPACE:
-                bullet_pos = [ship_pos[0] + ship_width, ship_pos[1] + ship_height // 2 - bullet_height // 2]
-                bullets.append(bullet_pos)
-            if (event.key == pygame.K_LCTRL or event.key == pygame.K_RCTRL) and pygame.key.get_pressed()[pygame.K_x]:
+    while not game_over:
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        if 0 <= mouse_x <= WIDTH and 0 <= mouse_y <= HEIGHT:
+            paused = False
+        else:
+            paused = True
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+
                 game_over = True
-            if event.key == pygame.K_z and laser_active:  # Disparar o laser
-                laser_pos = [ship_pos[0] + ship_width, ship_pos[1] + ship_height // 2]
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
 
-                # set_window_always_on_top()  # Atualizar para sempre no topo quando o laser é ativado
+                    pause()
+                if event.key == pygame.K_SPACE:
+                    bullet_pos = [ship_pos[0] + ship_width, ship_pos[1] + ship_height // 2 - bullet_height // 2]
+                    bullets.append(bullet_pos)
+                if (event.key == pygame.K_LCTRL):
+                    pygame.quit()
+                    exit()
 
-    keys = pygame.key.get_pressed()
-    if not paused:
-        if keys[pygame.K_UP] and ship_pos[1] > 0:
-            ship_pos[1] -= ship_speed
-        if keys[pygame.K_DOWN] and ship_pos[1] < HEIGHT - ship_height:
-            ship_pos[1] += ship_speed
-        if keys[pygame.K_LEFT] and ship_pos[0] > 0:
-            ship_pos[0] -= ship_speed
-        if keys[pygame.K_RIGHT] and ship_pos[0] < WIDTH - ship_width:
-            ship_pos[0] += ship_speed
+                if event.key == pygame.K_z and laser_active:  # Disparar o laser
+                    laser_pos = [ship_pos[0] + ship_width, ship_pos[1] + ship_height // 2]
 
-    screen.fill(BLACK)
-    for i in range(num_repeats):
-        screen.blit(background, (i * background_width, 0))
-    # Movimentação dos projéteis
-    for bullet in bullets[:]:
-        bullet[0] += bullet_speed
-        if bullet[0] > WIDTH:
-            bullets.remove(bullet)
+        keys = pygame.key.get_pressed()
+        if not paused:
+            if keys[pygame.K_UP] and ship_pos[1] > 0:
+                ship_pos[1] -= ship_speed
+            if keys[pygame.K_DOWN] and ship_pos[1] < HEIGHT - ship_height:
+                ship_pos[1] += ship_speed
+            if keys[pygame.K_LEFT] and ship_pos[0] > 0:
+                ship_pos[0] -= ship_speed
+            if keys[pygame.K_RIGHT] and ship_pos[0] < WIDTH - ship_width:
+                ship_pos[0] += ship_speed
 
-    # Adicionar alienígenas
-    if random.randint(1, 20) == 1:
-        alien_type_index = random.randint(0, len(alien_types) - 1)
-        alien_pos = [WIDTH - alien_img1.get_width(), random.randint(0, HEIGHT - alien_img1.get_height())]
-        aliens.append({"pos": alien_pos, "type": alien_type_index, "death_count": 0})
+        screen.fill(BLACK)
+        for i in range(num_repeats):
+            screen.blit(background, (i * background_width, 0))
+        # Movimentação dos projéteis
+        for bullet in bullets[:]:
+            bullet[0] += bullet_speed
+            if bullet[0] > WIDTH:
+                bullets.remove(bullet)
 
-    # Movimentação dos alienígenas
-    for alien in aliens[:]:
-        alien["pos"][0] -= alien_speed
-        if alien["pos"][0] < 0:
-            aliens.remove(alien)
+        # Adicionar alienígenas
+        if random.randint(1, 20) == 1:
+            alien_type_index = random.randint(0, len(alien_types) - 1)
+            alien_pos = [WIDTH - alien_img1.get_width(), random.randint(0, HEIGHT - alien_img1.get_height())]
+            aliens.append({"pos": alien_pos, "type": alien_type_index, "death_count": 0})
 
-    # Detecção de colisão entre projéteis e alienígenas
-    for bullet in bullets[:]:
-        bullet_removed = False
+        # Movimentação dos alienígenas
         for alien in aliens[:]:
-            if detect_collision(bullet, alien["pos"], bullet_width, bullet_height, alien_width, alien_height):
-                if bullet in bullets:  # Verificar se o projétil ainda está na lista
-                    bullets.remove(bullet)
-                    bullet_removed = True
-                alien["death_count"] += 1
-                if alien["death_count"] >= alien_death_threshold[alien["type"]]:
+            alien["pos"][0] -= alien_speed
+            if alien["pos"][0] < 0:
+                aliens.remove(alien)
+
+        # Detecção de colisão entre projéteis e alienígenas
+        for bullet in bullets[:]:
+            bullet_removed = False
+            for alien in aliens[:]:
+                if detect_collision(bullet, alien["pos"], bullet_width, bullet_height, alien_width, alien_height):
+                    if bullet in bullets:  # Verificar se o projétil ainda está na lista
+                        bullets.remove(bullet)
+                        bullet_removed = True
+                    alien["death_count"] += 1
+                    if alien["death_count"] >= alien_death_threshold[alien["type"]]:
+                        aliens.remove(alien)
+                        # Incrementar o score ao destruir o alienígena
+                        score += 1
+                        # Adicionar item colecionável ao ser destruído
+                        item_type = generate_item_type(alien["type"])
+                        item_pos = alien["pos"]
+                        items.append({"pos": item_pos, "type": item_type})
+                if bullet_removed:
+                    break
+
+        # Movimentação dos itens colecionáveis
+        for item in items[:]:
+            item["pos"][0] #-= alien_speed
+            if item["pos"][0] < 0:
+                items.remove(item)
+        for alien in aliens[:]:
+            if detect_collision(ship_pos, alien["pos"], ship_width, ship_height, alien_width, alien_height):
+                if shield_active:
+                    # Se o escudo estiver ativo, não termine o jogo
                     aliens.remove(alien)
-                    # Incrementar o score ao destruir o alienígena
                     score += 1
-                    # Adicionar item colecionável ao ser destruído
-                    item_type = generate_item_type(alien["type"])
-                    item_pos = alien["pos"]
-                    items.append({"pos": item_pos, "type": item_type})
-            if bullet_removed:
-                break
+                else:
+                    game_over = True
 
-    # Movimentação dos itens colecionáveis
-    for item in items[:]:
-        item["pos"][0] #-= alien_speed
-        if item["pos"][0] < 0:
-            items.remove(item)
-    for alien in aliens[:]:
-        if detect_collision(ship_pos, alien["pos"], ship_width, ship_height, alien_width, alien_height):
-            if shield_active:
-                # Se o escudo estiver ativo, não termine o jogo
-                aliens.remove(alien)
-                score += 1
-            else:
-                game_over = True
+        # Detecção de colisão entre nave e itens colecionáveis
+        for item in items[:]:
+            if detect_collision(ship_pos, item["pos"], ship_width, ship_height, item_width, item_height):
+                if item["type"] == item_img2:  # Se o item for do tipo "escudo"
+                    shield_active = True
+                    shield_timer = shield_duration
+                if item["type"] == item_img4:  # Se o item for do tipo "laser"
+                    laser_active = True
+                    laser_timer = laser_duration
+                items.remove(item)
 
-    # Detecção de colisão entre nave e itens colecionáveis
-    for item in items[:]:
-        if detect_collision(ship_pos, item["pos"], ship_width, ship_height, item_width, item_height):
-            if item["type"] == item_img2:  # Se o item for do tipo "escudo"
-                shield_active = True
-                shield_timer = shield_duration
-            if item["type"] == item_img4:  # Se o item for do tipo "laser"
-                laser_active = True
-                laser_timer = laser_duration
-            items.remove(item)
+        # Atualizar e desenhar projéteis na tela
+        for bullet in bullets:
+            pygame.draw.rect(screen, YELLOW, (bullet[0], bullet[1], bullet_width, bullet_height))
 
-    # Atualizar e desenhar projéteis na tela
-    for bullet in bullets:
-        pygame.draw.rect(screen, YELLOW, (bullet[0], bullet[1], bullet_width, bullet_height))
+        # Desenhar alienígenas na tela
+        for alien in aliens:
+            screen.blit(alien_types[alien["type"]], alien["pos"])
 
-    # Desenhar alienígenas na tela
-    for alien in aliens:
-        screen.blit(alien_types[alien["type"]], alien["pos"])
+        # Desenhar itens colecionáveis na tela
+        for item in items:
+            screen.blit(item["type"], item["pos"])
 
-    # Desenhar itens colecionáveis na tela
-    for item in items:
-        screen.blit(item["type"], item["pos"])
+        # Desenhar a nave
+        screen.blit(ship_img, ship_pos)
 
-    # Desenhar a nave
-    screen.blit(ship_img, ship_pos)
+        # Desenhar o escudo redondo
+        if shield_active:
+            pygame.draw.circle(screen, BLUE, (ship_pos[0] + ship_width // 2, ship_pos[1] + ship_height // 2),
+                               max(ship_width, ship_height) // 2 + 10, 2)
 
-    # Desenhar o escudo redondo
-    if shield_active:
-        pygame.draw.circle(screen, BLUE, (ship_pos[0] + ship_width // 2, ship_pos[1] + ship_height // 2),
-                           max(ship_width, ship_height) // 2 + 10, 2)
+            shield_timer -= 1
+            if shield_timer <= 0:
+                shield_active = False
 
-        shield_timer -= 1
-        if shield_timer <= 0:
-            shield_active = False
+        # Desenhar o laser, se o laser estiver ativo e laser_pos não for None
+        if laser_active and laser_pos:
+            # Atualizar a posição do laser
+            laser_pos[0] += laser_speed
+            laser_rect = pygame.Rect(laser_pos[0], 0, 2, HEIGHT)
+            pygame.draw.rect(screen, GREEN, laser_rect)
 
-    # Desenhar o laser, se o laser estiver ativo e laser_pos não for None
-    if laser_active and laser_pos:
-        # Atualizar a posição do laser
-        laser_pos[0] += laser_speed
-        laser_rect = pygame.Rect(laser_pos[0], 0, 2, HEIGHT)
-        pygame.draw.rect(screen, GREEN, laser_rect)
+            # Verificar colisão do laser com os alienígenas
+            for alien in aliens[:]:
+                if laser_rect.colliderect(
+                        pygame.Rect(alien["pos"][0], alien["pos"][1], alien_width, alien_height)):
+                    aliens.remove(alien)
+                    score += 1
 
-        # Verificar colisão do laser com os alienígenas
-        for alien in aliens[:]:
-            if laser_rect.colliderect(
-                    pygame.Rect(alien["pos"][0], alien["pos"][1], alien_width, alien_height)):
-                aliens.remove(alien)
-                score += 1
+            # Verificar se o laser saiu da tela
+            if laser_pos[0] > WIDTH:
+                laser_active = False
+                laser_pos = None  # Redefinir laser_pos para None quando o laser acabar
 
-        # Verificar se o laser saiu da tela
-        if laser_pos[0] > WIDTH:
-            laser_active = False
-            laser_pos = None  # Redefinir laser_pos para None quando o laser acabar
+            laser_timer -= 1
+            if laser_timer <= 0:
+                laser_active = False
+                laser_pos = None  # Redefinir laser_pos para None quando o laser acabar
 
-        laser_timer -= 1
-        if laser_timer <= 0:
-            laser_active = False
-            laser_pos = None  # Redefinir laser_pos para None quando o laser acabar
+        # Mostrar o score na tela
+        draw_text(f'Score: {score}', font, WHITE, screen, 10, 10)
 
-    # Mostrar o score na tela
-    draw_text(f'Score: {score}', font, WHITE, screen, 10, 10)
+        # Mostrar mensagem de Game Over se o jogo terminar
+        if game_over:
+            game_over_screen()
 
-    # Mostrar mensagem de Game Over se o jogo terminar
-    if game_over:
-        game_over_screen()
-        #draw_text('Game Over!', font, RED, screen, WIDTH // 2 - 50, HEIGHT // 2 - 15)
+        pygame.display.flip()
+        clock.tick(60)
 
-    pygame.display.flip()
-    clock.tick(60)
+    # Encerrar o Pygame
+    pygame.quit()
 
-# Encerrar o Pygame
-pygame.quit()
+if __name__ == "__main__":
+    main()
