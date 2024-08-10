@@ -117,6 +117,51 @@ def detect_collision(obj1_pos, obj2_pos, obj1_width, obj1_height, obj2_width, ob
 def generate_item_type(alien_type_index):
     return item_images[alien_type_index]  # Escolhe o item correspondente ao tipo de alienígena
 
+
+def game_over_screen():
+    global game_over, score
+    game_over = True
+    font = pygame.font.SysFont(None, 25)
+
+    while game_over:
+        #screen.fill(BLACK)
+        draw_text('Game Over!', font, RED, screen, WIDTH // 2 - 50, HEIGHT // 2 )
+
+        #draw_text('Game Over!', font, RED, screen, WIDTH // 2 - 100, HEIGHT // 2 - 30)
+        #draw_text('Press R to Restart or Q to Quit', font, WHITE, screen, WIDTH // 2 - 180, HEIGHT // 2 + 20)
+        draw_text('Press R to Restart or Q to Quit', font, RED, screen, WIDTH // 2 - 100, HEIGHT // 2 - 20)
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()  # Sai do jogo completamente
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    restart_game()  # Função para reiniciar o jogo
+                elif event.key == pygame.K_q:
+                    pygame.quit()
+                    exit()  # Sai do jogo completamente
+
+
+def restart_game():
+    global game_over, score, aliens, bullets, items, ship_pos, shield_active, shield_timer, laser_active, laser_timer, laser_pos
+
+    # Reinicializar variáveis principais
+    game_over = False
+    score = 0
+    aliens = []
+    bullets = []
+    items = []
+    ship_pos = [50, HEIGHT // 2 - ship_img.get_height() // 2]
+    shield_active = False
+    shield_timer = 0
+    laser_active = False
+    laser_timer = 0
+    laser_pos = None
+
+
 def pause():
     paused = True
     font = pygame.font.SysFont(None, 30)
@@ -293,7 +338,8 @@ while not game_over:
 
     # Mostrar mensagem de Game Over se o jogo terminar
     if game_over:
-        draw_text('Game Over!', font, RED, screen, WIDTH // 2 - 50, HEIGHT // 2 - 15)
+        game_over_screen()
+        #draw_text('Game Over!', font, RED, screen, WIDTH // 2 - 50, HEIGHT // 2 - 15)
 
     pygame.display.flip()
     clock.tick(60)
