@@ -57,6 +57,7 @@ missile_img = pygame.transform.scale(missile_img, (20, 5))
 
 # Adicione as variáveis para os mísseis
 missiles = []
+MAX_MISSILES = 3
 missile_speed = 7
 explosions = []
 explosion_radius_increment = 2
@@ -66,7 +67,7 @@ max_explosion_radius = 50  # Tamanho máximo da explosão
 # Configurações dos alienígenas
 alien_speed = 1.5
 alien_types = [alien_img1, alien_img2, alien_img3, alien_img4]  # Lista de tipos de alienígenas
-alien_death_threshold = [3, 5, 7, 3]  # Número de mortes necessárias para deixar o item
+alien_death_threshold = [1, 1,1, 1]  # Número de mortes necessárias para deixar o item
 
 aliens = []
 alien_width, alien_height = alien_img1.get_size()
@@ -147,7 +148,7 @@ def game_over_screen():
                     exit()  # Sai do jogo completamente
 
 def restart_game():
-    global game_over, score, aliens, bullets, items, ship_pos, shield_active, shield_timer, laser_active, laser_timer, laser_pos
+    global game_over, score, aliens, bullets, items, ship_pos, shield_active, shield_timer, laser_active, laser_timer, laser_pos, missiles, explosions, missile_enabled
 
     # Reinicializar variáveis principais
     game_over = False
@@ -155,12 +156,22 @@ def restart_game():
     aliens = []
     bullets = []
     items = []
+    missiles = []
+    explosions = []
+
+    # Redefinir a posição inicial da nave
     ship_pos = [50, HEIGHT // 2 - ship_img.get_height() // 2]
+
+    # Reiniciar estados e temporizadores
     shield_active = False
     shield_timer = 0
     laser_active = False
     laser_timer = 0
     laser_pos = None
+    missile_enabled = False  # Desativar o disparo de mísseis
+
+    # Outras variáveis globais que possam ser afetadas pelo estado do jogo podem ser redefinidas aqui, se necessário.
+
 
 def pause():
     paused = True
@@ -178,7 +189,7 @@ def pause():
         clock.tick(5)
 
 # Loop principal do jogo
-missile_enabled = True
+missile_enabled = False
 game_over = False
 paused = False
 score = 0
@@ -190,21 +201,15 @@ def main():
     global missile_enabled, game_over, score, aliens, bullets, items, ship_pos, shield_active, shield_timer, laser_active, laser_timer, laser_pos
     caminho_json = 'pontuacoes.json'
     nome_jogador = get_player_name(screen)
-
-
     verificar_ou_criar_json(caminho_json)
-    #pontuacao_atual = carregar_pontuacao(caminho_json, nome_jogador)
 
-    # Exibir o nome do jogador ou fazer qualquer configuração inicial antes de começar o jogo
-    #print(f"Bem-vindo, {player_name}!")
 
     while not game_over:
-        mouse_x, mouse_y = pygame.mouse.get_pos()
+        """ mouse_x, mouse_y = pygame.mouse.get_pos()
         if 0 <= mouse_x <= WIDTH and 0 <= mouse_y <= HEIGHT:
             paused = False
         else:
-            paused = True
-
+            paused = True"""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
 
@@ -239,8 +244,10 @@ def main():
                 ship_pos[0] += ship_speed
 
         screen.fill(BLACK)
+        #para add fundo a largura da janela
         for i in range(num_repeats):
             screen.blit(background, (i * background_width, 0))
+
         # Movimentação dos projéteis
         for bullet in bullets[:]:
             bullet[0] += bullet_speed
@@ -285,6 +292,7 @@ def main():
             if item["pos"][0] < 0:
                 items.remove(item)
 
+        #colisao da nave com aliens
         for alien in aliens[:]:
             if detect_collision(ship_pos, alien["pos"], ship_width, ship_height, alien_width, alien_height):
                 if shield_active:
@@ -314,29 +322,39 @@ def main():
         for bullet in bullets:
             pygame.draw.rect(screen, YELLOW, (bullet[0], bullet[1], bullet_width, bullet_height))
 
+        #detectar colisao dos misseis com aliens
         for missile in missiles[:]:
-            missile_removed = False
             missile[0] += missile_speed
             if missile[0] > WIDTH:
                 missiles.remove(missile)
+                continue  # Pular o resto do loop para este míssil
+
+            missile_removed = False
             for alien in aliens[:]:
-                if detect_collision(missile, alien["pos"], 10, 10, alien_width, alien_height):
+                if detect_collision(missile, alien["pos"], 20, 10, alien_width, alien_height):
                     explosions.append({"pos": (missile[0], missile[1]), "radius": 0})
+                    score += 1
                     missiles.remove(missile)
                     missile_removed = True
+                    break  # Sai do loop de alienígenas se o míssil colidir com um alienígena
 
-                    break
             if missile_removed:
-                break
+                break  # Sai do loop de mísseis se um míssil for removido
+
+            # Se o número de mísseis exceder o limite, remova os mais antigos
+            if len(missiles) >= MAX_MISSILES:
+                missile_enabled = False
 
 
-            # Desenhar e animar as explosões
 
-        # Desenhar alienígenas na tela
+            # Desenhar alienígenas na tela
         for alien in aliens:
             screen.blit(alien_types[alien["type"]], alien["pos"])
+
+        #desenhar missies na tela
         for missile in missiles:
             screen.blit(missile_img, missile)
+
         # Desenhar itens colecionáveis na tela
         for item in items:
             screen.blit(item["type"], item["pos"])
@@ -348,7 +366,6 @@ def main():
         if shield_active:
             pygame.draw.circle(screen, BLUE, (ship_pos[0] + ship_width // 2, ship_pos[1] + ship_height // 2),
                                max(ship_width, ship_height) // 2 + 10, 2)
-
             shield_timer -= 1
             if shield_timer <= 0:
                 shield_active = False
@@ -376,9 +393,12 @@ def main():
             if laser_timer <= 0:
                 laser_active = False
                 laser_pos = None  # Redefinir laser_pos para None quando o laser acabar
-        draw_explosions()
+
+        draw_explosions()#desenhar explosao ao collidir misseis com aliens
+
         # Mostrar o score na tela
         draw_text(f'Score: {score}', font, WHITE, screen, 10, 10)
+        #atualizar pontucao no .json
         atualizar_pontuacao(caminho_json, nome_jogador, score)
         # Mostrar mensagem de Game Over se o jogo terminar
         if game_over:
