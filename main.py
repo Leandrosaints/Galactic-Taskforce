@@ -1,31 +1,16 @@
 import pygame
 import random
-import ctypes
-
-# Inicialização do Pygame
+from config import *
 pygame.init()
 from dados_json import *
-# Configurações da tela
-user32 = ctypes.windll.user32
-screen_width, screen_height = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
-WIDTH, HEIGHT = screen_width, 50  # Largura ajustada para ocupar toda a largura da tela
 
-# Configura a janela do jogo
+from essential_functions import *
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
-pygame.display.set_caption("Invasão Alienígena")
-
-# Função para manter a janela sempre no topo
+# Função para manter a janela sempre no topo da barra de tarefas
 x_pos = 0
 y_pos = screen_height - HEIGHT - 40
 ctypes.windll.user32.SetWindowPos(pygame.display.get_wm_info()['window'], 0, x_pos, y_pos, 0, 0, 0x0001)
 
-# Cores
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-YELLOW = (255, 255, 0)
 
 # Carregar imagens
 ship_img = pygame.image.load("img/ship_1.png").convert_alpha()
@@ -95,12 +80,6 @@ clock = pygame.time.Clock()
 
 
 # Função para desenhar texto na tela
-def draw_text(text, font, color, surface, x, y):
-    text_obj = font.render(text, True, color)
-    text_rect = text_obj.get_rect()
-    text_rect.topleft = (x, y)
-    surface.blit(text_obj, text_rect)
-
 
 # Função para detectar colisão
 def detect_collision(obj1_pos, obj2_pos, obj1_width, obj1_height, obj2_width, obj2_height):
@@ -116,107 +95,6 @@ def detect_collision(obj1_pos, obj2_pos, obj1_width, obj1_height, obj2_width, ob
 # Função para gerar item colecionável
 def generate_item_type(alien_type_index):
     return item_images[alien_type_index]  # Escolhe o item correspondente ao tipo de alienígena
-def draw_text_button(text, x, y, width, height, font, action=None):
-    button_rect = pygame.Rect(x, y, width, height)
-    pygame.draw.rect(screen, BLACK, button_rect, 2)  # Borda preta
-    draw_text(text, font, BLUE, screen, x,  HEIGHT // 2 - 12)  # Desenha o texto sobre o botão
-    mouse = pygame.mouse.get_pos()
-    click = pygame.mouse.get_pressed()
-    if button_rect.collidepoint(mouse):
-        if click[0] == 1 and action is not None:
-            action()
-    return button_rect.collidepoint(mouse)
-import pygame
-
-
-def display_ranking():
-    font = pygame.font.SysFont(None, 40)
-    start_x = -200  # Ponto inicial fora da tela (primeiro nome)
-    y_position =HEIGHT // 2 - 18
-    ranking_list = load_ranking_from_json()
-    done = False
-
-    while not done:
-        screen.fill(BLACK)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-
-        # Desenhar o ranking lado a lado
-        current_x = start_x
-        for i, (name, score) in enumerate(ranking_list):
-            text = f"{i + 1}. {name}: {score}"
-            text_surface = font.render(text, True, WHITE)
-            screen.blit(text_surface, (current_x, y_position))
-            current_x += text_surface.get_width() + 50  # Move para a próxima posição com espaçamento
-
-        start_x += 2  # Velocidade do deslizamento
-        if current_x > WIDTH:
-            done = True  # Sai do loop quando o texto passar completamente pela tela
-
-        pygame.display.flip()
-        pygame.time.delay(50)
-
-
-def get_player_name():
-    font = pygame.font.SysFont(None, 30)
-    input_box = pygame.Rect(WIDTH // 2 - 70, HEIGHT // 2 - 18, 140, 30)
-    color_inactive = pygame.Color('lightskyblue3')
-    color_active = pygame.Color('dodgerblue2')
-    color = color_inactive
-    text = ''
-    active = False
-    done = False
-
-    # Texto "Veja os Ranks ou digite seu nome para iniciar"
-
-    # Posição do texto
-    #instruction_text_rect = instruction_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 50))
-
-    while not done:
-        screen.fill(BLACK)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                #sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if input_box.collidepoint(event.pos):
-                    active = not active
-                else:
-                    active = False
-                color = color_active if active else color_inactive
-
-
-
-            if event.type == pygame.KEYDOWN:
-                if active:
-                    if event.key == pygame.K_RETURN:
-                        done = True
-                    elif event.key == pygame.K_BACKSPACE:
-                        text = text[:-1]
-                    else:
-                        text += event.unicode
-
-        # Renderizar o texto da caixa de entrada
-        txt_surface = font.render(text, True, color)
-        width = max(200, txt_surface.get_width() + 10)
-        input_box.w = width
-        pygame.draw.rect(screen, color, input_box, 2)
-        screen.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
-
-        if draw_text_button('Rank', 270, HEIGHT // 2 - 14, 200, 50, font,  action=lambda:display_ranking()):
-
-            ...
-        draw_text('ou digite seu nome para iniciar >>>', font, WHITE, screen, 330,
-                  HEIGHT // 2 - 14)  # font.render('Veja os Ranks ou digite seu nome para iniciar', True, pygame.Color('white'))
-
-        # Desenhar o texto de instrução
-        #screen.blit(instruction_text)
-
-        pygame.display.flip()
-
-    return text
 
 def game_over_screen():
     global game_over, score
@@ -240,7 +118,6 @@ def game_over_screen():
                 elif event.key == pygame.K_q:
                     pygame.quit()
                     exit()  # Sai do jogo completamente
-
 
 def restart_game():
     global game_over, score, aliens, bullets, items, ship_pos, shield_active, shield_timer, laser_active, laser_timer, laser_pos
@@ -283,7 +160,7 @@ def main():
     #player_name = get_player_name()  # Obter o nome do jogador antes de iniciar o jogo
     global game_over, score, aliens, bullets, items, ship_pos, shield_active, shield_timer, laser_active, laser_timer, laser_pos
     caminho_json = 'pontuacoes.json'
-    nome_jogador = get_player_name()
+    nome_jogador = get_player_name(screen)
 
 
     verificar_ou_criar_json(caminho_json)
