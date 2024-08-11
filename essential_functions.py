@@ -108,3 +108,16 @@ def get_player_name(screen):
         pygame.display.flip()
 
     return text
+import pygame
+
+class Missile(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.image.load('img/misseis.png').convert_alpha()  # Imagem do míssil
+        self.rect = self.image.get_rect(center=(x, y))
+        self.speed = -10  # Velocidade do míssil (para cima)
+
+    def update(self):
+        self.rect.y += self.speed  # Movimenta o míssil para cima
+        if self.rect.bottom < 0:  # Remove o míssil quando ele sair da tela
+            self.kill()

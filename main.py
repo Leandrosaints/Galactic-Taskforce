@@ -15,21 +15,22 @@ ctypes.windll.user32.SetWindowPos(pygame.display.get_wm_info()['window'], 0, x_p
 # Carregar imagens
 ship_img = pygame.image.load("img/ship_1.png").convert_alpha()
 ship_img = pygame.transform.scale(ship_img, (30, 30))
-alien_img1 = pygame.image.load("img/alien1.png").convert_alpha()  # Tipo 1
+alien_img1 = pygame.image.load("img/aliens/alien1.png").convert_alpha()  # Tipo 1
 alien_img1 = pygame.transform.scale(alien_img1, (20, 30))
-alien_img2 = pygame.image.load("img/alien2.png").convert_alpha()  # Tipo 2
+alien_img2 = pygame.image.load("img/aliens/alien2.png").convert_alpha()  # Tipo 2
 alien_img2 = pygame.transform.scale(alien_img2, (20, 30))
-alien_img3 = pygame.image.load("img/alien3.png").convert_alpha()  # Tipo 3
+alien_img3 = pygame.image.load("img/aliens/alien3.png").convert_alpha()  # Tipo 3
 alien_img3 = pygame.transform.scale(alien_img3, (20, 30))
-alien_img4 = pygame.image.load("img/alien4.png").convert_alpha()  # Tipo 4
+alien_img4 = pygame.image.load("img/aliens/alien4.png").convert_alpha()  # Tipo 4
 alien_img4 = pygame.transform.scale(alien_img4, (20, 30))
-item_img1 = pygame.image.load("img/healt.png").convert_alpha()  # Item tipo 1
+
+item_img1 = pygame.image.load("img/itens/healt.png").convert_alpha()  # Item tipo 1 healt
 item_img1 = pygame.transform.scale(item_img1, (15, 15))
-item_img2 = pygame.image.load("img/escudo.png").convert_alpha()  # Item tipo 2
+item_img2 = pygame.image.load("img/itens/escudo.png").convert_alpha()  # Item tipo 2 escudo
 item_img2 = pygame.transform.scale(item_img2, (15, 15))
-item_img3 = pygame.image.load("img/healt.png").convert_alpha()  # Item tipo 3
+item_img3 = pygame.image.load("img/itens/laser.png").convert_alpha()  # Item tipo 3 laser
 item_img3 = pygame.transform.scale(item_img3, (15, 15))
-item_img4 = pygame.image.load("img/item4.png").convert_alpha()  # Item tipo 4
+item_img4 = pygame.image.load("img/itens/misseis_item.png").convert_alpha()  # Item tipo 4 missies
 item_img4 = pygame.transform.scale(item_img4, (15, 15))
 
 item_images = [item_img1, item_img2, item_img3, item_img4]  # Lista de imagens de itens colecionáveis
@@ -43,14 +44,25 @@ num_repeats = (WIDTH // background_width) + 1
 # Configurações da nave
 ship_width, ship_height = ship_img.get_size()
 ship_pos = [50, HEIGHT // 2 - ship_height // 2]
-ship_speed = 5
+ship_speed = 5#velocidade da nave do player
 
 # Configurações dos projéteis
 bullet_width = 5
 bullet_height = 1
 bullets = []
 bullet_speed = 10
+#config dos missil
+missile_img = pygame.image.load("img/itens/misseis.png").convert_alpha()
+missile_img = pygame.transform.scale(missile_img, (20, 5))
 
+# Adicione as variáveis para os mísseis
+missiles = []
+missile_speed = 7
+explosions = []
+explosion_radius_increment = 2
+max_explosion_radius = 50  # Tamanho máximo da explosão
+
+######################
 # Configurações dos alienígenas
 alien_speed = 1.5
 alien_types = [alien_img1, alien_img2, alien_img3, alien_img4]  # Lista de tipos de alienígenas
@@ -79,7 +91,6 @@ laser_speed = 5  # Velocidade do laser
 clock = pygame.time.Clock()
 
 
-# Função para desenhar texto na tela
 
 # Função para detectar colisão
 def detect_collision(obj1_pos, obj2_pos, obj1_width, obj1_height, obj2_width, obj2_height):
@@ -91,7 +102,23 @@ def detect_collision(obj1_pos, obj2_pos, obj1_width, obj1_height, obj2_width, ob
         return True
     return False
 
+def draw_explosions():
+    for explosion in explosions[:]:
+        pygame.draw.circle(screen, RED, explosion["pos"], explosion["radius"], 2)
+        explosion["radius"] += explosion_radius_increment
+        if explosion["radius"] > max_explosion_radius:
+            check_explosion_hits(explosion)
+            explosions.remove(explosion)
 
+# Função para verificar se a explosão atingiu algum alienígena
+def check_explosion_hits(explosion):
+    for alien in aliens[:]:
+        alien_center = (alien["pos"][0] + alien_width // 2, alien["pos"][1] + alien_height // 2)
+        distance = pygame.math.Vector2(alien_center).distance_to(explosion["pos"])
+        if distance <= explosion["radius"]:
+            aliens.remove(alien)
+            global score
+            score += 1
 # Função para gerar item colecionável
 def generate_item_type(alien_type_index):
     return item_images[alien_type_index]  # Escolhe o item correspondente ao tipo de alienígena
@@ -151,14 +178,16 @@ def pause():
         clock.tick(5)
 
 # Loop principal do jogo
+missile_enabled = True
 game_over = False
 paused = False
 score = 0
+
 # Fonte para o texto do score e game over
 font = pygame.font.SysFont(None, 15)
 def main():
     #player_name = get_player_name()  # Obter o nome do jogador antes de iniciar o jogo
-    global game_over, score, aliens, bullets, items, ship_pos, shield_active, shield_timer, laser_active, laser_timer, laser_pos
+    global missile_enabled, game_over, score, aliens, bullets, items, ship_pos, shield_active, shield_timer, laser_active, laser_timer, laser_pos
     caminho_json = 'pontuacoes.json'
     nome_jogador = get_player_name(screen)
 
@@ -185,16 +214,19 @@ def main():
                 if event.key == pygame.K_p:
 
                     pause()
-                if event.key == pygame.K_SPACE:
+                elif event.key == pygame.K_SPACE:
                     bullet_pos = [ship_pos[0] + ship_width, ship_pos[1] + ship_height // 2 - bullet_height // 2]
                     bullets.append(bullet_pos)
-                if (event.key == pygame.K_LCTRL):
+                elif (event.key == pygame.K_LCTRL):
                     pygame.quit()
                     exit()
 
-                if event.key == pygame.K_z and laser_active:  # Disparar o laser
+                elif event.key == pygame.K_z and laser_active:  # Disparar o laser
                     laser_pos = [ship_pos[0] + ship_width, ship_pos[1] + ship_height // 2]
-
+                    laser_pos = [ship_pos[0] + ship_width, ship_pos[1] + ship_height // 2]
+                elif event.key == pygame.K_m and missile_enabled:  # Disparar o míssil
+                    missile_pos = [ship_pos[0] + ship_width, ship_pos[1] + ship_height // 2 ]
+                    missiles.append(missile_pos)
         keys = pygame.key.get_pressed()
         if not paused:
             if keys[pygame.K_UP] and ship_pos[1] > 0:
@@ -252,6 +284,7 @@ def main():
             item["pos"][0] #-= alien_speed
             if item["pos"][0] < 0:
                 items.remove(item)
+
         for alien in aliens[:]:
             if detect_collision(ship_pos, alien["pos"], ship_width, ship_height, alien_width, alien_height):
                 if shield_active:
@@ -267,19 +300,43 @@ def main():
                 if item["type"] == item_img2:  # Se o item for do tipo "escudo"
                     shield_active = True
                     shield_timer = shield_duration
-                if item["type"] == item_img4:  # Se o item for do tipo "laser"
+                if item["type"] == item_img3:  # Se o item for do tipo "laser"
                     laser_active = True
                     laser_timer = laser_duration
+
+                if item['type'] == item_img4:
+                    missile_enabled = True  # Ativa a capacidade de disparar mísseis
+                    # Remova o item coletado
+
                 items.remove(item)
 
         # Atualizar e desenhar projéteis na tela
         for bullet in bullets:
             pygame.draw.rect(screen, YELLOW, (bullet[0], bullet[1], bullet_width, bullet_height))
 
+        for missile in missiles[:]:
+            missile_removed = False
+            missile[0] += missile_speed
+            if missile[0] > WIDTH:
+                missiles.remove(missile)
+            for alien in aliens[:]:
+                if detect_collision(missile, alien["pos"], 10, 10, alien_width, alien_height):
+                    explosions.append({"pos": (missile[0], missile[1]), "radius": 0})
+                    missiles.remove(missile)
+                    missile_removed = True
+
+                    break
+            if missile_removed:
+                break
+
+
+            # Desenhar e animar as explosões
+
         # Desenhar alienígenas na tela
         for alien in aliens:
             screen.blit(alien_types[alien["type"]], alien["pos"])
-
+        for missile in missiles:
+            screen.blit(missile_img, missile)
         # Desenhar itens colecionáveis na tela
         for item in items:
             screen.blit(item["type"], item["pos"])
@@ -319,7 +376,7 @@ def main():
             if laser_timer <= 0:
                 laser_active = False
                 laser_pos = None  # Redefinir laser_pos para None quando o laser acabar
-
+        draw_explosions()
         # Mostrar o score na tela
         draw_text(f'Score: {score}', font, WHITE, screen, 10, 10)
         atualizar_pontuacao(caminho_json, nome_jogador, score)
