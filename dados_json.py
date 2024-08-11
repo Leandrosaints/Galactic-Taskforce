@@ -24,3 +24,12 @@ def atualizar_pontuacao(caminho_json, nome_jogador, nova_pontuacao):
 
     with open(caminho_json, 'w') as f:
         json.dump(dados, f, indent=4)
+def load_ranking_from_json():
+    try:
+        with open('pontuacoes.json', 'r') as file:
+            data = json.load(file)
+        # Ordenar o ranking pela pontuação (maior para menor)
+        ranking = sorted(data.items(), key=lambda x: x[1], reverse=True)
+        return ranking
+    except FileNotFoundError:
+        return []

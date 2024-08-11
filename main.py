@@ -62,7 +62,7 @@ ship_speed = 5
 
 # Configurações dos projéteis
 bullet_width = 5
-bullet_height = 5
+bullet_height = 1
 bullets = []
 bullet_speed = 10
 
@@ -116,17 +116,63 @@ def detect_collision(obj1_pos, obj2_pos, obj1_width, obj1_height, obj2_width, ob
 # Função para gerar item colecionável
 def generate_item_type(alien_type_index):
     return item_images[alien_type_index]  # Escolhe o item correspondente ao tipo de alienígena
+def draw_text_button(text, x, y, width, height, font, action=None):
+    button_rect = pygame.Rect(x, y, width, height)
+    pygame.draw.rect(screen, BLACK, button_rect, 2)  # Borda preta
+    draw_text(text, font, BLUE, screen, x,  HEIGHT // 2 - 12)  # Desenha o texto sobre o botão
+    mouse = pygame.mouse.get_pos()
+    click = pygame.mouse.get_pressed()
+    if button_rect.collidepoint(mouse):
+        if click[0] == 1 and action is not None:
+            action()
+    return button_rect.collidepoint(mouse)
+import pygame
+
+
+def display_ranking():
+    font = pygame.font.SysFont(None, 40)
+    start_x = -200  # Ponto inicial fora da tela (primeiro nome)
+    y_position =HEIGHT // 2 - 18
+    ranking_list = load_ranking_from_json()
+    done = False
+
+    while not done:
+        screen.fill(BLACK)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+
+        # Desenhar o ranking lado a lado
+        current_x = start_x
+        for i, (name, score) in enumerate(ranking_list):
+            text = f"{i + 1}. {name}: {score}"
+            text_surface = font.render(text, True, WHITE)
+            screen.blit(text_surface, (current_x, y_position))
+            current_x += text_surface.get_width() + 50  # Move para a próxima posição com espaçamento
+
+        start_x += 2  # Velocidade do deslizamento
+        if current_x > WIDTH:
+            done = True  # Sai do loop quando o texto passar completamente pela tela
+
+        pygame.display.flip()
+        pygame.time.delay(50)
 
 
 def get_player_name():
     font = pygame.font.SysFont(None, 30)
-    input_box = pygame.Rect(WIDTH // 2 - 70, HEIGHT // 2 - 15, 140, 30)
+    input_box = pygame.Rect(WIDTH // 2 - 70, HEIGHT // 2 - 18, 140, 30)
     color_inactive = pygame.Color('lightskyblue3')
     color_active = pygame.Color('dodgerblue2')
     color = color_inactive
     text = ''
     active = False
     done = False
+
+    # Texto "Veja os Ranks ou digite seu nome para iniciar"
+
+    # Posição do texto
+    #instruction_text_rect = instruction_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 50))
 
     while not done:
         screen.fill(BLACK)
@@ -140,6 +186,9 @@ def get_player_name():
                 else:
                     active = False
                 color = color_active if active else color_inactive
+
+
+
             if event.type == pygame.KEYDOWN:
                 if active:
                     if event.key == pygame.K_RETURN:
@@ -151,14 +200,24 @@ def get_player_name():
 
         # Renderizar o texto da caixa de entrada
         txt_surface = font.render(text, True, color)
-        width = max(200, txt_surface.get_width()+10)
+        width = max(200, txt_surface.get_width() + 10)
         input_box.w = width
-        screen.fill(BLACK)
         pygame.draw.rect(screen, color, input_box, 2)
-        screen.blit(txt_surface, (input_box.x+5, input_box.y+5))
+        screen.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
+
+        if draw_text_button('Rank', 270, HEIGHT // 2 - 14, 200, 50, font,  action=lambda:display_ranking()):
+
+            ...
+        draw_text('ou digite seu nome para iniciar >>>', font, WHITE, screen, 330,
+                  HEIGHT // 2 - 14)  # font.render('Veja os Ranks ou digite seu nome para iniciar', True, pygame.Color('white'))
+
+        # Desenhar o texto de instrução
+        #screen.blit(instruction_text)
+
         pygame.display.flip()
 
     return text
+
 def game_over_screen():
     global game_over, score
     game_over = True
@@ -365,7 +424,7 @@ def main():
             # Atualizar a posição do laser
             laser_pos[0] += laser_speed
             laser_rect = pygame.Rect(laser_pos[0], 0, 2, HEIGHT)
-            pygame.draw.rect(screen, GREEN, laser_rect)
+            pygame.draw.rect(screen, RED, laser_rect)
 
             # Verificar colisão do laser com os alienígenas
             for alien in aliens[:]:
