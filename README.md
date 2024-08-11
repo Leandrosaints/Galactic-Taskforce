@@ -13,14 +13,16 @@
 
 1. **Iniciar o Jogo:**
    - Execute o arquivo principal do jogo para iniciar.
-
+   - Na tela incial digite o nome para iniciar e de 'enter' ou click em ver o **Ranking**
 2. **Controles:**
+   - **Tecla Enter:** Ao inserir o nome no compo input para iniciar a jornada.
    - **Tecla Z:** Ativa e dispara o laser.
    - **Teclas de Direção:** Movem a nave.
    - **Tecla Space:** Atira.
-   - **Teclas CTRL + x:** fecha o jogo rapidamente.
+   - **Tecla CTRL:** Fecha o jogo rapidamente.
 
-3. **Objetivo:**
+
+4. **Objetivo:**
    - Destrua o máximo possível de alienígenas para obter uma alta pontuação. O jogo termina quando a nave é destruída.
 
 ## Requisitos
@@ -33,11 +35,6 @@
 1. Clone o repositório:
    ```bash
    git clone <URL-do-repositório>
-## Capturas de Tela
-
-<!-- Adicione suas capturas de tela aqui -->
-![Tela do Jogo 1](caminho/para/captura1.png)
-![Tela do Jogo 2](caminho/para/captura2.png)
 
 ## Créditos
 
