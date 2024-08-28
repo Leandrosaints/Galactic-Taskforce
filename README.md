@@ -34,7 +34,7 @@
 
 1. Clone o repositório:
    ```bash
-   git clone <URL-do-repositório>
+   git clone https://github.com/Leandrosaints/Galactic-Taskforce.git
 
 ## Créditos
 
